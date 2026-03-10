@@ -3,7 +3,7 @@ import zipfile
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-TOKEN = os.getenv("8772077518:AAG-iTTaDQWPR3zGxjw7Y8PZgE-dBkDnQuk")
+TOKEN = os.getenv("8772077518:AAHk8hzSBU1vh-rVogeFnjLKWsPj5HxAwh0")
 
 menu = [
     ["Edit VCF", "Split VCF"],
