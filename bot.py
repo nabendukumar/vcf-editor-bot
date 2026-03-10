@@ -1,8 +1,6 @@
 # bot.py
 import os
 import asyncio
-import pandas as pd
-import vobject
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -12,56 +10,37 @@ from telegram.ext import (
     filters
 )
 
-# Bot token
+# Bot token from environment variable
 TOKEN = os.getenv("BOT_TOKEN")
 
-# START command
+# Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot is running! ✅")
 
-# Example: echo command
+# Example echo handler for messages
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     await update.message.reply_text(f"You said: {text}")
 
-# Example: handle VCF file
-async def handle_vcf(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.document:
-        file = await update.message.document.get_file()
-        file_path = f"downloads/{update.message.document.file_name}"
-        os.makedirs("downloads", exist_ok=True)
-        await file.download_to_drive(file_path)
-        await update.message.reply_text(f"VCF saved at {file_path}")
-        # Example: parse VCF
-        with open(file_path, "r") as f:
-            vcard = vobject.readOne(f.read())
-        await update.message.reply_text(f"Parsed contact: {vcard.fn.value}")
+# Add your VCF editor features here as async functions
+# Example:
+# async def my_feature(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     ...
 
-# Example: handle Excel
-async def handle_excel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.document:
-        file = await update.message.document.get_file()
-        file_path = f"downloads/{update.message.document.file_name}"
-        os.makedirs("downloads", exist_ok=True)
-        await file.download_to_drive(file_path)
-        df = pd.read_excel(file_path)
-        await update.message.reply_text(f"Excel rows: {len(df)}")
-
-# Main bot
 async def main():
+    # Create the app
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # Handlers
+    # Add handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-    app.add_handler(MessageHandler(filters.Document.FileExtension("vcf"), handle_vcf))
-    app.add_handler(MessageHandler(filters.Document.FileExtension("xlsx"), handle_excel))
 
-    # Start bot
-    await app.start()
-    print("Bot started successfully ✅")
-    await app.updater.start_polling()
-    await app.idle()
+    # Add your custom feature handlers here
+    # app.add_handler(CommandHandler("mycmd", my_feature))
+
+    # Start the bot using run_polling()
+    print("Bot starting...")
+    await app.run_polling()  # handles start + idle internally
 
 if __name__ == "__main__":
     asyncio.run(main())
