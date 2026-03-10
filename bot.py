@@ -1,8 +1,9 @@
 import os
+import asyncio
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-# BOT_TOKEN will be taken from Render Environment Variable
+# Read bot token from environment
 TOKEN = os.getenv("BOT_TOKEN")
 
 # Menu buttons
@@ -10,20 +11,19 @@ menu = [
     ["Edit VCF", "Split VCF"],
     ["Merge VCF", "Make VCF"],
 ]
-
 markup = ReplyKeyboardMarkup(menu, resize_keyboard=True)
 
-# Store user mode and files
+# Store user mode and uploaded files
 user_data = {}
 
-# START COMMAND
+# --- START COMMAND ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🔥 VCF Editor Bot\nSelect a feature from the menu below:",
         reply_markup=markup
     )
 
-# MENU HANDLER
+# --- MENU HANDLER ---
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_data[update.effective_user.id] = {"mode": text}
@@ -37,7 +37,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "Make VCF":
         await update.message.reply_text("Send a TXT file containing phone numbers (one per line).")
 
-# HANDLE FILES
+# --- HANDLE FILES ---
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     mode = user_data.get(user_id, {}).get("mode")
@@ -109,7 +109,7 @@ END:VCARD
             f.writelines(cards)
         await update.message.reply_document(document=open(output_file, "rb"))
 
-# --- MERGE VCF (triggered by /done) ---
+# --- MERGE VCF (/done) ---
 async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_data.get(user_id, {}).get("mode") != "Merge VCF":
@@ -125,14 +125,15 @@ async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_document(document=open(output_file, "rb"))
 
 # --- MAIN ---
-def main():
+async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("done", done))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, menu_handler))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_file))
     print("Bot Running...")
-    app.run_polling()
+    await app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
